@@ -30,7 +30,10 @@ fn log(str: []const u8) void {
 
 fn panic(str: []const u8) noreturn {
     panic_utf8(str.len, @intFromPtr(str.ptr));
-    std.process.exit(1);
+    if (@import("builtin").is_test) {
+        std.process.exit(1);
+    }
+    unreachable;
 }
 
 fn valueReturn(value: []const u8) void {
