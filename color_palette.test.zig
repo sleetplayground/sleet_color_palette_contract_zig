@@ -1,6 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
-const color_palette = @import("color_palette.zig");
+const color_palette = @import("color_palette_contract.zig");
 
 const MAX_U64: u64 = 18446744073709551615;
 
@@ -137,8 +137,7 @@ test "add palette" {
     color_palette.init();
 
     // Test adding valid palette
-    const valid_input = \
-        \"{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\",\"#00FF00\",\"#0000FF\"]}";
+    const valid_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\",\"#00FF00\",\"#0000FF\"]}";
     try ctx.setInput(valid_input);
     color_palette.add_palette();
 
@@ -146,8 +145,7 @@ test "add palette" {
     try testing.expect(ctx.storage.contains("palette:palette-1"));
 
     // Test invalid color format
-    const invalid_color = \
-        \"{\"name\":\"Invalid\",\"colors\":[\"#GG0000\"]}";
+    const invalid_color = "{\"name\":\"Invalid\",\"colors\":[\"#GG0000\"]}";
     try ctx.setInput(invalid_color);
     try testing.expectError(error.TestPanic, testing.expectPanic(color_palette.add_palette));
 }
@@ -160,15 +158,13 @@ test "remove palette" {
     color_palette.init();
 
     // Add a palette first
-    const palette_input = \
-        \"{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
+    const palette_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
     try ctx.setInput(palette_input);
     color_palette.add_palette();
 
     // Test removing as non-owner
     try ctx.setSigner("other.near");
-    const remove_input = \
-        \"{\"id\":\"palette-1\"}";
+    const remove_input = "{\"id\":\"palette-1\"}";
     try ctx.setInput(remove_input);
     try testing.expectError(error.TestPanic, testing.expectPanic(color_palette.remove_palette));
 
@@ -186,13 +182,11 @@ test "get palettes" {
     color_palette.init();
 
     // Add some palettes
-    const palette1 = \
-        \"{\"name\":\"Palette 1\",\"colors\":[\"#FF0000\"]}";
+    const palette1 = "{\"name\":\"Palette 1\",\"colors\":[\"#FF0000\"]}";
     try ctx.setInput(palette1);
     color_palette.add_palette();
 
-    const palette2 = \
-        \"{\"name\":\"Palette 2\",\"colors\":[\"#00FF00\"]}";
+    const palette2 = "{\"name\":\"Palette 2\",\"colors\":[\"#00FF00\"]}";
     try ctx.setInput(palette2);
     color_palette.add_palette();
 
