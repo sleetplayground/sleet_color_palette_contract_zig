@@ -280,7 +280,11 @@ test "get palettes" {
     // Test empty palettes list
     std.debug.print("\n-> Testing Empty Palettes List\n", .{});
     color_palette.get_palettes();
-    std.debug.print("Empty Palettes List Returned Successfully\n", .{});
+    if (ctx.return_value.len > 0) {
+        std.debug.print("Empty Palettes List Response: {s}\n", .{ctx.return_value});
+    } else {
+        std.debug.print("Empty Palettes List Confirmed\n", .{});
+    }
 
     // Add some palettes
     std.debug.print("\n-> Adding Test Palettes\n", .{});
@@ -288,14 +292,26 @@ test "get palettes" {
     const palette2 = "{\"name\":\"Palette 2\",\"colors\":[\"#00FF00\"]}";
     try ctx.setInput(palette1);
     color_palette.add_palette();
+    std.debug.print("Added Palette 1: {s}\n", .{palette1});
+
     try ctx.setInput(palette2);
     color_palette.add_palette();
-    std.debug.print("Test Palettes Added Successfully\n", .{});
+    std.debug.print("Added Palette 2: {s}\n", .{palette2});
 
     // Test getting all palettes
     std.debug.print("\n-> Testing Get All Palettes\n", .{});
     color_palette.get_palettes();
-    std.debug.print("All Palettes Retrieved Successfully\n", .{});
+    if (ctx.return_value.len > 0) {
+        std.debug.print("Retrieved Palettes:\n{s}\n", .{ctx.return_value});
+    }
+
+    // Verify storage keys
+    if (ctx.storage.contains("palette:palette-1")) {
+        std.debug.print("Verified Palette 1 in Storage\n", .{});
+    }
+    if (ctx.storage.contains("palette:palette-2")) {
+        std.debug.print("Verified Palette 2 in Storage\n", .{});
+    }
 }
 
 test "like operations" {
@@ -311,26 +327,35 @@ test "like operations" {
     const palette_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
     try ctx.setInput(palette_input);
     color_palette.add_palette();
-    std.debug.print("Test Palette Added Successfully\n", .{});
+    std.debug.print("Test Palette Added Successfully - ID: palette-1\n", .{});
 
     // Test liking a palette
     std.debug.print("\n-> Testing Like Palette\n", .{});
     const like_input = "{\"palette_id\":\"palette-1\"}";
     try ctx.setInput(like_input);
     color_palette.like_palette();
-    std.debug.print("Like Added Successfully\n", .{});
+
+    const likes_key = "likes:palette-1";
+    if (ctx.storage.get(likes_key)) |likes_str| {
+        const likes = std.fmt.parseInt(u32, likes_str, 10) catch 0;
+        std.debug.print("Like Added Successfully - Current Likes: {d}\n", .{likes});
+    }
 
     // Test getting likes count
     std.debug.print("\n-> Testing Get Likes Count\n", .{});
     try ctx.setInput(like_input);
     color_palette.get_likes();
-    std.debug.print("Likes Count Retrieved Successfully\n", .{});
+    std.debug.print("Likes Count Response: {s}\n", .{ctx.return_value});
 
     // Test unliking a palette
     std.debug.print("\n-> Testing Unlike Palette\n", .{});
     try ctx.setInput(like_input);
     color_palette.unlike_palette();
-    std.debug.print("Like Removed Successfully\n", .{});
+
+    if (ctx.storage.get(likes_key)) |likes_str| {
+        const likes = std.fmt.parseInt(u32, likes_str, 10) catch 0;
+        std.debug.print("Like Removed Successfully - Current Likes: {d}\n", .{likes});
+    }
 
     // Test liking non-existent palette
     std.debug.print("\n-> Testing Like Non-existent Palette\n", .{});
@@ -340,40 +365,55 @@ test "like operations" {
     color_palette.like_palette();
     try testing.expect(!test_panic_expected);
     std.debug.print("Non-existent Palette Validation Passed\n", .{});
+
+    std.debug.print("\nAll Like Operations Tests Completed Successfully\n", .{});
 }
 
 test "unlike palette" {
     ctx = try TestContext.init();
     defer ctx.deinit();
 
+    std.debug.print("\n=== Testing Unlike Palette Operations ===\n", .{});
+
     // Initialize contract and add a palette
     color_palette.init();
+    std.debug.print("Contract Initialized Successfully\n", .{});
+
     const palette_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
     try ctx.setInput(palette_input);
     color_palette.add_palette();
+    std.debug.print("Test Palette Added Successfully\n", .{});
 
     // Like the palette first
+    std.debug.print("\n-> Testing Initial Like Operation\n", .{});
     const like_input = "{\"palette_id\":\"palette-1\"}";
     try ctx.setInput(like_input);
     color_palette.like_palette();
+    std.debug.print("Initial Like Added Successfully\n", .{});
 
     // Test unliking
+    std.debug.print("\n-> Testing Unlike Operation\n", .{});
     color_palette.unlike_palette();
     const likes_key = "likes:palette-1";
     try testing.expect(ctx.storage.contains(likes_key));
     const likes = try std.fmt.parseInt(u32, ctx.storage.get(likes_key).?, 10);
     try testing.expectEqual(@as(u32, 0), likes);
+    std.debug.print("Unlike Operation Successful - Likes Count: {d}\n", .{likes});
 
     // Test unliking non-existent palette
+    std.debug.print("\n-> Testing Unlike Non-existent Palette\n", .{});
     const invalid_unlike = "{\"palette_id\":\"palette-999\"}";
     try ctx.setInput(invalid_unlike);
     test_panic_expected = true;
     color_palette.unlike_palette();
     try testing.expect(!test_panic_expected);
+    std.debug.print("Non-existent Palette Validation Passed\n", .{});
 
     // Test unliking without previous like
+    std.debug.print("\n-> Testing Unlike Without Previous Like\n", .{});
     try ctx.setInput(like_input);
     test_panic_expected = true;
     color_palette.unlike_palette();
     try testing.expect(!test_panic_expected);
+    std.debug.print("Unlike Without Previous Like Validation Passed\n", .{});
 }
