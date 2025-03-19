@@ -2,5 +2,7 @@
 .DS_Store
 
 # ⚡️ Zig Build Outputs
+.zig-cache
+zig-out
 color_palette_contract.wasm.o
 color_palette_contract.wasm
