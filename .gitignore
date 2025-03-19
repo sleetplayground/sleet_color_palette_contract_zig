@@ -1,0 +1,6 @@
+# Mac
+.DS_Store
+
+# ⚡️ Zig Build Outputs
+color_palette_contract.wasm.o
+color_palette_contract.wasm
