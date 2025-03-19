@@ -5,10 +5,10 @@ const color_palette = @import("color_palette_contract.zig");
 const MAX_U64: u64 = 18446744073709551615;
 var test_panic_expected = false;
 
-fn panic(msg: []const u8) void {
+fn panic(msg: []const u8) noreturn {
     if (test_panic_expected) {
         test_panic_expected = false;
-        return;
+        std.process.exit(0);
     }
     std.debug.print("Test panic: {s}\n", .{msg});
     std.process.exit(1);
