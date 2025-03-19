@@ -3,8 +3,13 @@ const testing = std.testing;
 const color_palette = @import("color_palette_contract.zig");
 
 const MAX_U64: u64 = 18446744073709551615;
+var test_panic_expected = false;
 
 fn panic(msg: []const u8) void {
+    if (test_panic_expected) {
+        test_panic_expected = false;
+        return;
+    }
     std.debug.panic("{s}", .{msg});
 }
 
@@ -83,7 +88,10 @@ export fn register_len(register_id: u64) u64 {
 export fn value_return(len: u64, ptr: u64) void {
     const slice = @as([*]const u8, @ptrFromInt(ptr))[0..len];
     testing.allocator.free(ctx.return_value);
-    ctx.return_value = testing.allocator.dupe(u8, slice) catch panic("Failed to duplicate return value");
+    ctx.return_value = testing.allocator.dupe(u8, slice) catch |err| {
+        panic("Failed to duplicate return value");
+        unreachable;
+    };
 }
 
 export fn storage_has_key(key_len: u64, key_ptr: u64) u64 {
@@ -105,7 +113,13 @@ export fn storage_read(key_len: u64, key_ptr: u64, register_id: u64) u64 {
 export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u64, register_id: u64) u64 {
     const key = @as([*]const u8, @ptrFromInt(key_ptr))[0..key_len];
     const value = @as([*]const u8, @ptrFromInt(value_ptr))[0..value_len];
-    const value_copy = testing.allocator.dupe(u8, value) catch panic("Failed to duplicate value");
+    const value_copy = testing.allocator.dupe(u8, value) catch |err| {
+        panic("Failed to duplicate value");
+        unreachable;
+    };
+    if (ctx.storage.get(key)) |old_value| {
+        testing.allocator.free(old_value);
+    }
     ctx.storage.put(key, value_copy) catch panic("Failed to store value");
     _ = register_id;
     return 1;
@@ -121,7 +135,9 @@ test "initialization" {
     try testing.expectEqualStrings("test.near", ctx.storage.get("owner").?);
 
     // Test double initialization should panic
-    try testing.expectError(error.TestPanic, testing.expectPanic(color_palette.init));
+    test_panic_expected = true;
+    color_palette.init();
+    try testing.expect(!test_panic_expected);
 }
 
 test "add palette" {
@@ -142,7 +158,9 @@ test "add palette" {
     // Test invalid color format
     const invalid_color = "{\"name\":\"Invalid\",\"colors\":[\"#GG0000\"]}";
     try ctx.setInput(invalid_color);
-    try testing.expectError(error.TestPanic, testing.expectPanic(color_palette.add_palette));
+    test_panic_expected = true;
+    color_palette.add_palette();
+    try testing.expect(!test_panic_expected);
 }
 
 test "remove palette" {
@@ -161,10 +179,13 @@ test "remove palette" {
     try ctx.setSigner("other.near");
     const remove_input = "{\"id\":\"palette-1\"}";
     try ctx.setInput(remove_input);
-    try testing.expectError(error.TestPanic, testing.expectPanic(color_palette.remove_palette));
+    test_panic_expected = true;
+    color_palette.remove_palette();
+    try testing.expect(!test_panic_expected);
 
     // Test removing as owner
     try ctx.setSigner("test.near");
+    try ctx.setInput(remove_input);
     color_palette.remove_palette();
     try testing.expect(!ctx.storage.contains("palette:palette-1"));
 }

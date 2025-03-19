@@ -17,7 +17,7 @@ pub fn build(b: *std.Build) void {
     // Main WASM artifact
     const color_palette_lib = b.addExecutable(.{
         .name = "color_palette",
-        .root_source_file = b.path("color_palette.zig"),
+        .root_source_file = b.path("color_palette_contract.zig"),
         .target = target,
         .optimize = optimize,
         .strip = true,

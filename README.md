@@ -16,6 +16,7 @@ zig build-exe color_palette_contract.zig -target wasm32-freestanding -O ReleaseS
 # Build and run tests
 zig build --release=small
 zig build test
+zig test color_palette.test.zig
 ```
 
 This will create `color_palette_contract.wasm` file.
