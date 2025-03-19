@@ -35,6 +35,14 @@ This will create `color_palette_contract.wasm` file.
 
 ### Deploying
 
+```bash
+# Deploy contract
+near deploy --wasmFile color_palette_contract.wasm mycontract.myaccount.testnet
+
+# Initialize contract
+near call mycontract.myaccount.testnet init --accountId myaccount.testnet
+```
+
 ### Basic Operations
 ```bash
 # Initialize contract
