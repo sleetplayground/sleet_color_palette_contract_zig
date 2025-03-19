@@ -30,7 +30,7 @@ fn log(str: []const u8) void {
 
 fn panic(str: []const u8) noreturn {
     panic_utf8(str.len, @intFromPtr(str.ptr));
-    unreachable;
+    while (true) {}
 }
 
 fn valueReturn(value: []const u8) void {

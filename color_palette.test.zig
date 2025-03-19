@@ -11,6 +11,7 @@ fn panic(msg: []const u8) void {
         return;
     }
     std.debug.panic("{s}", .{msg});
+    unreachable;
 }
 
 const TestContext = struct {
@@ -71,6 +72,12 @@ export fn signer_account_id(register_id: u64) void {
     };
 }
 
+export fn current_account_id(register_id: u64) void {
+    ctx.registers.put(register_id, ctx.current_account) catch {
+        panic("Failed to store current account in register");
+    };
+}
+
 export fn read_register(register_id: u64, ptr: u64) void {
     if (ctx.registers.get(register_id)) |data| {
         const dest = @as([*]u8, @ptrFromInt(ptr));
@@ -82,13 +89,13 @@ export fn register_len(register_id: u64) u64 {
     if (ctx.registers.get(register_id)) |data| {
         return data.len;
     }
-    return MAX_U64;
+    return 0;
 }
 
 export fn value_return(len: u64, ptr: u64) void {
     const slice = @as([*]const u8, @ptrFromInt(ptr))[0..len];
     testing.allocator.free(ctx.return_value);
-    ctx.return_value = testing.allocator.dupe(u8, slice) catch |err| {
+    ctx.return_value = testing.allocator.dupe(u8, slice) catch {
         panic("Failed to duplicate return value");
         unreachable;
     };
@@ -113,7 +120,7 @@ export fn storage_read(key_len: u64, key_ptr: u64, register_id: u64) u64 {
 export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u64, register_id: u64) u64 {
     const key = @as([*]const u8, @ptrFromInt(key_ptr))[0..key_len];
     const value = @as([*]const u8, @ptrFromInt(value_ptr))[0..value_len];
-    const value_copy = testing.allocator.dupe(u8, value) catch |err| {
+    const value_copy = testing.allocator.dupe(u8, value) catch {
         panic("Failed to duplicate value");
         unreachable;
     };
@@ -123,6 +130,16 @@ export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u
     ctx.storage.put(key, value_copy) catch panic("Failed to store value");
     _ = register_id;
     return 1;
+}
+
+export fn log_utf8(len: u64, ptr: u64) void {
+    const str = @as([*]const u8, @ptrFromInt(ptr))[0..len];
+    std.debug.print("{s}\n", .{str});
+}
+
+export fn panic_utf8(len: u64, ptr: u64) void {
+    const str = @as([*]const u8, @ptrFromInt(ptr))[0..len];
+    panic(str);
 }
 
 test "initialization" {

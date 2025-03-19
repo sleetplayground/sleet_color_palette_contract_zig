@@ -45,6 +45,8 @@ This will create `color_palette_contract.wasm` file.
 # Deploy contract
 near deploy --wasmFile color_palette_contract.wasm mycontract.myaccount.testnet
 
+near deploy --wasmFile zig-out/bin/color_palette.wasm mycontract.myaccount.testnet
+
 # Initialize contract
 near call mycontract.myaccount.testnet init --accountId myaccount.testnet
 ```
