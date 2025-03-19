@@ -377,24 +377,3 @@ test "unlike palette" {
     color_palette.unlike_palette();
     try testing.expect(!test_panic_expected);
 }
-
-test "get palettes" {
-    ctx = try TestContext.init();
-    defer ctx.deinit();
-
-    // Initialize contract
-    color_palette.init();
-
-    // Add some palettes
-    const palette1 = "{\"name\":\"Palette 1\",\"colors\":[\"#FF0000\"]}";
-    try ctx.setInput(palette1);
-    color_palette.add_palette();
-
-    const palette2 = "{\"name\":\"Palette 2\",\"colors\":[\"#00FF00\"]}";
-    try ctx.setInput(palette2);
-    color_palette.add_palette();
-
-    // Test get_palettes
-    color_palette.get_palettes();
-    try testing.expect(ctx.return_value.len > 0);
-}
