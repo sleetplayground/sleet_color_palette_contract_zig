@@ -10,8 +10,8 @@ fn panic(msg: []const u8) void {
         test_panic_expected = false;
         return;
     }
-    std.debug.panic("{s}", .{msg});
-    unreachable;
+    std.debug.print("Test panic: {s}\n", .{msg});
+    std.process.exit(1);
 }
 
 const TestContext = struct {
