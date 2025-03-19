@@ -10,7 +10,12 @@ a small near smart contract for color palttes written in zig
 
 2. Build the contract:
 ```bash
+# Build directly
 zig build-exe color_palette_contract.zig -target wasm32-freestanding -O ReleaseSmall --export=init --export=add_palette --export=remove_palette --export=get_palettes --export=get_palette_by_id --export=like_palette --export=unlike_palette --export=get_likes -fno-entry
+
+# Build and run tests
+zig build --release=small
+zig build test
 ```
 
 This will create `color_palette_contract.wasm` file.
