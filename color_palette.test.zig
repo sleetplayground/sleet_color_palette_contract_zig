@@ -83,9 +83,7 @@ export fn register_len(register_id: u64) u64 {
 export fn value_return(len: u64, ptr: u64) void {
     const slice = @as([*]const u8, @ptrFromInt(ptr))[0..len];
     testing.allocator.free(ctx.return_value);
-    ctx.return_value = testing.allocator.dupe(u8, slice) catch {
-        panic("Failed to duplicate return value");
-    };
+    ctx.return_value = testing.allocator.dupe(u8, slice) catch panic("Failed to duplicate return value");
 }
 
 export fn storage_has_key(key_len: u64, key_ptr: u64) u64 {
@@ -107,12 +105,9 @@ export fn storage_read(key_len: u64, key_ptr: u64, register_id: u64) u64 {
 export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u64, register_id: u64) u64 {
     const key = @as([*]const u8, @ptrFromInt(key_ptr))[0..key_len];
     const value = @as([*]const u8, @ptrFromInt(value_ptr))[0..value_len];
-    const value_copy = testing.allocator.dupe(u8, value) catch {
-        panic("Failed to duplicate value");
-    };
-    ctx.storage.put(key, value_copy) catch {
-        panic("Failed to store value");
-    };
+    const value_copy = testing.allocator.dupe(u8, value) catch panic("Failed to duplicate value");
+    ctx.storage.put(key, value_copy) catch panic("Failed to store value");
+    _ = register_id;
     return 1;
 }
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 // NOTE: In smart contract context don't really have to free memory before execution ends
-var allocator = std.heap.wasm_allocator;
+var allocator = if (@import("builtin").is_test) std.testing.allocator else std.heap.wasm_allocator;
 
 // Import host functions provided by NEAR runtime
 extern fn input(register_id: u64) void;
@@ -84,7 +84,7 @@ fn storageWrite(key: []const u8, value: []const u8) bool {
 }
 
 // Contract methods
-export fn init() void {
+pub export fn init() void {
     if (storageHasKey(OWNER_KEY)) {
         panic("Contract is already initialized");
     }
@@ -113,7 +113,7 @@ fn validateHexColor(color: []const u8) bool {
     return true;
 }
 
-export fn add_palette() void {
+pub export fn add_palette() void {
     const input_str = readInputAlloc();
     const palette_input = std.json.parseFromSlice(struct {
         name: []const u8,
@@ -163,7 +163,7 @@ export fn add_palette() void {
     log("Palette added successfully");
 }
 
-export fn remove_palette() void {
+pub export fn remove_palette() void {
     assertOwner();
 
     const input_str = readInputAlloc();
@@ -183,7 +183,7 @@ export fn remove_palette() void {
     log("Palette removed successfully");
 }
 
-export fn get_palettes() void {
+pub export fn get_palettes() void {
     const count_str = storageRead(PALETTE_COUNT_KEY) orelse "0";
     const count = std.fmt.parseInt(u32, count_str, 10) catch 0;
 
