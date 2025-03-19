@@ -1,5 +1,5 @@
 # SLEET Color Palette Contract
-a small near smart contract for color palttes written in zig
+a small near smart contract for color palettes written in zig
 
 ---
 
