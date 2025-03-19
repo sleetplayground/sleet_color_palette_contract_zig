@@ -8,9 +8,10 @@ var test_panic_expected = false;
 fn panic(msg: []const u8) noreturn {
     if (test_panic_expected) {
         test_panic_expected = false;
+        std.debug.print("[Test] Expected panic occurred: {s}\n", .{msg});
         std.process.exit(0);
     }
-    std.debug.print("Test panic: {s}\n", .{msg});
+    std.debug.print("[Test Error] Unexpected panic: {s}\n", .{msg});
     std.process.exit(1);
 }
 
@@ -126,6 +127,9 @@ export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u
     };
     if (ctx.storage.get(key)) |old_value| {
         testing.allocator.free(old_value);
+        std.debug.print("[Storage] Updating key: {s}\n  Old value: {s}\n  New value: {s}\n", .{ key, old_value, value });
+    } else {
+        std.debug.print("[Storage] Writing new key: {s}\n  Value: {s}\n", .{ key, value });
     }
     ctx.storage.put(key, value_copy) catch panic("Failed to store value");
     _ = register_id;
@@ -134,11 +138,12 @@ export fn storage_write(key_len: u64, key_ptr: u64, value_len: u64, value_ptr: u
 
 export fn log_utf8(len: u64, ptr: u64) void {
     const str = @as([*]const u8, @ptrFromInt(ptr))[0..len];
-    std.debug.print("{s}\n", .{str});
+    std.debug.print("[Contract Log] {s}\n", .{str});
 }
 
 export fn panic_utf8(len: u64, ptr: u64) void {
     const str = @as([*]const u8, @ptrFromInt(ptr))[0..len];
+    std.debug.print("[Contract Panic] {s}\n", .{str});
     panic(str);
 }
 
@@ -169,33 +174,42 @@ test "add palette" {
     defer ctx.deinit();
 
     std.debug.print("\n=== Testing Add Palette Operations ===\n", .{});
+    std.debug.print("Test Context:\n  Signer: {s}\n  Current Account: {s}\n", .{ ctx.signer, ctx.current_account });
 
     // Initialize contract
     color_palette.init();
-    std.debug.print("Contract Initialized Successfully\n", .{});
+    std.debug.print("\n-> Contract Initialization\n", .{});
+    std.debug.print("  Status: Contract initialized successfully\n", .{});
+    if (ctx.storage.get("owner")) |owner| {
+        std.debug.print("  Owner Set: {s}\n", .{owner});
+    }
 
     // Test adding valid palette
     std.debug.print("\n-> Testing Valid Palette Addition\n", .{});
+    std.debug.print("Input Data:\n  Name: Test Palette\n  Colors: [#FF0000, #00FF00, #0000FF]\n", .{});
     const valid_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\",\"#00FF00\",\"#0000FF\"]}";
     try ctx.setInput(valid_input);
     color_palette.add_palette();
 
     // Verify palette was added
     if (ctx.storage.contains("palette:palette-1")) {
-        std.debug.print("Palette Added Successfully - ID: palette-1\n", .{});
+        std.debug.print("Palette Added Successfully:\n", .{});
+        std.debug.print("  ID: palette-1\n", .{});
         if (ctx.storage.get("palette:palette-1")) |palette_data| {
-            std.debug.print("Palette Data: {s}\n", .{palette_data});
+            std.debug.print("  Storage Data: {s}\n", .{palette_data});
         }
+        std.debug.print("  Creator: {s}\n", .{ctx.signer});
     }
 
     // Test empty name
     std.debug.print("\n-> Testing Empty Name Validation\n", .{});
+    std.debug.print("Attempting to add palette with empty name...\n", .{});
     const empty_name = "{\"name\":\"\",\"colors\":[\"#FF0000\"]}";
     try ctx.setInput(empty_name);
     test_panic_expected = true;
     color_palette.add_palette();
     try testing.expect(!test_panic_expected);
-    std.debug.print("Empty Name Validation Passed\n", .{});
+    std.debug.print("✓ Empty Name Validation Passed - Contract correctly rejected empty name\n", .{});
 
     // Test empty colors array
     std.debug.print("\n-> Testing Empty Colors Array Validation\n", .{});
