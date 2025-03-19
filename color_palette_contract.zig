@@ -316,7 +316,7 @@ pub export fn unlike_palette() void {
     log("Palette unliked successfully");
 }
 
-export fn get_likes() void {
+pub export fn get_likes() void {
     const input_str = readInputAlloc();
     const likes_input = std.json.parseFromSlice(struct {
         palette_id: []const u8,
