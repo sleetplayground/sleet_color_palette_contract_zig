@@ -172,12 +172,45 @@ test "add palette" {
     // Verify palette was added
     try testing.expect(ctx.storage.contains("palette:palette-1"));
 
+    // Test empty name
+    const empty_name = "{\"name\":\"\",\"colors\":[\"#FF0000\"]}";
+    try ctx.setInput(empty_name);
+    test_panic_expected = true;
+    color_palette.add_palette();
+    try testing.expect(!test_panic_expected);
+
+    // Test empty colors array
+    const empty_colors = "{\"name\":\"Empty Colors\",\"colors\":[]}";
+    try ctx.setInput(empty_colors);
+    test_panic_expected = true;
+    color_palette.add_palette();
+    try testing.expect(!test_panic_expected);
+
     // Test invalid color format
     const invalid_color = "{\"name\":\"Invalid\",\"colors\":[\"#GG0000\"]}";
     try ctx.setInput(invalid_color);
     test_panic_expected = true;
     color_palette.add_palette();
     try testing.expect(!test_panic_expected);
+
+    // Test duplicate palette name
+    const duplicate_name = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
+    try ctx.setInput(duplicate_name);
+    color_palette.add_palette();
+    try testing.expect(ctx.storage.contains("palette:palette-2"));
+
+    // Test maximum colors in palette
+    var max_colors_arr: [100][]const u8 = undefined;
+    for (max_colors_arr) |*color, i| {
+        color.* = "#FF0000";
+    }
+    var max_colors_input = std.ArrayList(u8).init(allocator);
+    defer max_colors_input.deinit();
+    try std.json.stringify(.{ .name = "Max Colors", .colors = max_colors_arr[0..] }, .{}, max_colors_input.writer());
+    try ctx.setInput(max_colors_input.items);
+    color_palette.add_palette();
+    try testing.expect(ctx.storage.contains("palette:palette-3"));
+
 }
 
 test "remove palette" {
@@ -198,6 +231,93 @@ test "remove palette" {
     try ctx.setInput(remove_input);
     test_panic_expected = true;
     color_palette.remove_palette();
+    try testing.expect(!test_panic_expected);
+
+    // Test removing non-existent palette
+    try ctx.setSigner("test.near");
+    const invalid_remove = "{\"id\":\"palette-999\"}";
+    try ctx.setInput(invalid_remove);
+    test_panic_expected = true;
+    color_palette.remove_palette();
+    try testing.expect(!test_panic_expected);
+
+    // Test successful removal
+    const valid_remove = "{\"id\":\"palette-1\"}";
+    try ctx.setInput(valid_remove);
+    color_palette.remove_palette();
+    try testing.expect(!ctx.storage.contains("palette:palette-1"));
+}
+
+test "like palette" {
+    ctx = try TestContext.init();
+    defer ctx.deinit();
+
+    // Initialize contract and add a palette
+    color_palette.init();
+    const palette_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
+    try ctx.setInput(palette_input);
+    color_palette.add_palette();
+
+    // Test liking a palette
+    const like_input = "{\"palette_id\":\"palette-1\"}";
+    try ctx.setInput(like_input);
+    color_palette.like_palette();
+
+    // Verify like was added
+    const likes_key = "likes:palette-1";
+    try testing.expect(ctx.storage.contains(likes_key));
+    const likes = try std.fmt.parseInt(u32, ctx.storage.get(likes_key).?, 10);
+    try testing.expectEqual(@as(u32, 1), likes);
+
+    // Test liking non-existent palette
+    const invalid_like = "{\"palette_id\":\"palette-999\"}";
+    try ctx.setInput(invalid_like);
+    test_panic_expected = true;
+    color_palette.like_palette();
+    try testing.expect(!test_panic_expected);
+
+    // Test double-liking
+    try ctx.setInput(like_input);
+    test_panic_expected = true;
+    color_palette.like_palette();
+    try testing.expect(!test_panic_expected);
+}
+
+test "unlike palette" {
+    ctx = try TestContext.init();
+    defer ctx.deinit();
+
+    // Initialize contract and add a palette
+    color_palette.init();
+    const palette_input = "{\"name\":\"Test Palette\",\"colors\":[\"#FF0000\"]}";
+    try ctx.setInput(palette_input);
+    color_palette.add_palette();
+
+    // Like the palette first
+    const like_input = "{\"palette_id\":\"palette-1\"}";
+    try ctx.setInput(like_input);
+    color_palette.like_palette();
+
+    // Test unliking
+    color_palette.unlike_palette();
+    const likes_key = "likes:palette-1";
+    try testing.expect(ctx.storage.contains(likes_key));
+    const likes = try std.fmt.parseInt(u32, ctx.storage.get(likes_key).?, 10);
+    try testing.expectEqual(@as(u32, 0), likes);
+
+    // Test unliking non-existent palette
+    const invalid_unlike = "{\"palette_id\":\"palette-999\"}";
+    try ctx.setInput(invalid_unlike);
+    test_panic_expected = true;
+    color_palette.unlike_palette();
+    try testing.expect(!test_panic_expected);
+
+    // Test unliking without previous like
+    try ctx.setInput(like_input);
+    test_panic_expected = true;
+    color_palette.unlike_palette();
+    try testing.expect(!test_panic_expected);
+}
     try testing.expect(!test_panic_expected);
 
     // Test removing as owner
