@@ -35,6 +35,10 @@ pub fn build(b: *std.Build) void {
         "add_palette",
         "remove_palette",
         "get_palettes",
+        "get_palette_by_id",
+        "like_palette",
+        "unlike_palette",
+        "get_likes",
     };
 
     b.installArtifact(color_palette_lib);
