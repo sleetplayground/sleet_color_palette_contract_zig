@@ -201,16 +201,15 @@ test "add palette" {
 
     // Test maximum colors in palette
     var max_colors_arr: [100][]const u8 = undefined;
-    for (max_colors_arr) |*color, i| {
+    for (max_colors_arr) |*color| {
         color.* = "#FF0000";
     }
-    var max_colors_input = std.ArrayList(u8).init(allocator);
+    var max_colors_input = std.ArrayList(u8).init(testing.allocator);
     defer max_colors_input.deinit();
     try std.json.stringify(.{ .name = "Max Colors", .colors = max_colors_arr[0..] }, .{}, max_colors_input.writer());
     try ctx.setInput(max_colors_input.items);
     color_palette.add_palette();
     try testing.expect(ctx.storage.contains("palette:palette-3"));
-
 }
 
 test "remove palette" {
@@ -317,14 +316,6 @@ test "unlike palette" {
     test_panic_expected = true;
     color_palette.unlike_palette();
     try testing.expect(!test_panic_expected);
-}
-    try testing.expect(!test_panic_expected);
-
-    // Test removing as owner
-    try ctx.setSigner("test.near");
-    try ctx.setInput(remove_input);
-    color_palette.remove_palette();
-    try testing.expect(!ctx.storage.contains("palette:palette-1"));
 }
 
 test "get palettes" {
