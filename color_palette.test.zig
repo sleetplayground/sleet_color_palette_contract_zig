@@ -201,7 +201,7 @@ test "add palette" {
 
     // Test maximum colors in palette
     var max_colors_arr: [100][]const u8 = undefined;
-    for (max_colors_arr) |*color| {
+    for (&max_colors_arr) |*color| {
         color.* = "#FF0000";
     }
     var max_colors_input = std.ArrayList(u8).init(testing.allocator);
@@ -241,8 +241,7 @@ test "remove palette" {
     try testing.expect(!test_panic_expected);
 
     // Test successful removal
-    const valid_remove = "{\"id\":\"palette-1\"}";
-    try ctx.setInput(valid_remove);
+    try ctx.setInput(remove_input);
     color_palette.remove_palette();
     try testing.expect(!ctx.storage.contains("palette:palette-1"));
 }

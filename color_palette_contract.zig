@@ -240,7 +240,7 @@ export fn get_palette_by_id() void {
     valueReturn("null");
 }
 
-export fn like_palette() void {
+pub export fn like_palette() void {
     const input_str = readInputAlloc();
     const like_input = std.json.parseFromSlice(struct {
         palette_id: []const u8,
@@ -278,7 +278,7 @@ export fn like_palette() void {
     log("Palette liked successfully");
 }
 
-export fn unlike_palette() void {
+pub export fn unlike_palette() void {
     const input_str = readInputAlloc();
     const unlike_input = std.json.parseFromSlice(struct {
         palette_id: []const u8,
