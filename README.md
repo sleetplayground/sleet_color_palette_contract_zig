@@ -1,6 +1,7 @@
 # SLEET Color Palette Contract
 a small near smart contract for color palttes written in zig
 
+---
 
 
 ### Building the Contract
@@ -14,8 +15,9 @@ zig build-exe color_palette_contract.zig -target wasm32-freestanding -O ReleaseS
 
 This will create `color_palette_contract.wasm` file.
 
-## Contract Methods
+---
 
+## Contract Methods
 
 - `init()`: Initializes the contract and sets the owner
 - `add_palette(name: string, colors: string[])`: Adds a new color palette
@@ -26,7 +28,12 @@ This will create `color_palette_contract.wasm` file.
 - `unlike_palette(palette_id: string)`: Removes a like from a palette
 - `get_likes(palette_id: string)`: Gets the total likes for a palette
 
+---
+
+
 ## Example Usage
+
+### Deploying
 
 ### Basic Operations
 ```bash
@@ -53,6 +60,11 @@ near call NEW_CONTRACT_ACCOUNT_ID unlike_palette '{"palette_id":"palette-1"}' --
 near view NEW_CONTRACT_ACCOUNT_ID get_likes '{"palette_id":"palette-1"}'
 ```
 
+
+#### TO DO
+- add tests
+- add method to get palette count
+- add ways to query palette info
 
 ---
 
